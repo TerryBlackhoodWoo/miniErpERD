@@ -1,496 +1,678 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>miniERP — ERD</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>miniERP — ERD v3</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  body {
-    background: #f5f5f5;
-    color: #222;
-    font-family: 'Courier New', monospace;
-    overflow: hidden;
-    user-select: none;
-  }
+    body {
+      background: #f5f5f5;
+      color: #222;
+      font-family: 'Courier New', monospace;
+      overflow: hidden;
+      user-select: none;
+    }
 
-  #toolbar {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: 48px;
-    background: #fff;
-    border-bottom: 1px solid #e0e0e0;
-    display: flex;
-    align-items: center;
-    padding: 0 20px;
-    gap: 16px;
-    z-index: 1000;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-  }
+    #toolbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 48px;
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 16px;
+      z-index: 1000;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    }
 
-  #toolbar .logo {
-    font-size: 15px;
-    font-weight: 700;
-    color: #222;
-    letter-spacing: 1px;
-  }
-  #toolbar .logo span { color: #c62828; }
+    #toolbar .logo {
+      font-size: 15px;
+      font-weight: 700;
+      color: #222;
+      letter-spacing: 1px;
+    }
 
-  #toolbar .divider { width: 1px; height: 20px; background: #e0e0e0; }
+    #toolbar .logo span {
+      color: #c62828;
+    }
 
-  .btn {
-    background: #f5f5f5;
-    border: 1px solid #ddd;
-    color: #555;
-    padding: 5px 12px;
-    border-radius: 4px;
-    font-size: 11px;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.15s;
-  }
-  .btn:hover { background: #eee; color: #222; border-color: #bbb; }
+    #toolbar .divider {
+      width: 1px;
+      height: 20px;
+      background: #e0e0e0;
+    }
 
-  .zone-filter { display: flex; gap: 6px; margin-left: auto; }
-  .zone-btn {
-    padding: 4px 10px;
-    border-radius: 3px;
-    font-size: 10px;
-    cursor: pointer;
-    border: 1px solid transparent;
-    font-family: inherit;
-    transition: all 0.15s;
-    font-weight: 600;
-  }
-  .zone-btn.inactive { opacity: 0.3; }
+    .btn {
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      color: #555;
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
 
-  #canvas-wrap {
-    position: fixed;
-    top: 48px; left: 0; right: 0; bottom: 26px;
-    overflow: hidden;
-    cursor: grab;
-    background: #f5f5f5;
-    background-image: radial-gradient(#ddd 1px, transparent 1px);
-    background-size: 24px 24px;
-  }
-  #canvas-wrap.dragging { cursor: grabbing; }
+    .btn:hover {
+      background: #eee;
+      color: #222;
+      border-color: #bbb;
+    }
 
-  #canvas { position: absolute; transform-origin: 0 0; }
+    .zone-filter {
+      display: flex;
+      gap: 6px;
+      margin-left: auto;
+    }
 
-  svg#lines {
-    position: absolute;
-    top: 0; left: 0;
-    pointer-events: none;
-    overflow: visible;
-  }
+    .zone-btn {
+      padding: 4px 10px;
+      border-radius: 3px;
+      font-size: 10px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      font-family: inherit;
+      transition: all 0.15s;
+      font-weight: 600;
+    }
 
-  .table-card {
-    position: absolute;
-    width: 250px;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid #ddd;
-    transition: border-color 0.15s, box-shadow 0.15s;
-    cursor: move;
-    background: #fff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  }
-  .table-card:hover { border-color: #aaa; box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
-  .table-card.selected { border-color: #c62828; box-shadow: 0 0 0 2px rgba(198,40,40,0.2), 0 4px 16px rgba(0,0,0,0.12); }
+    .zone-btn.inactive {
+      opacity: 0.3;
+    }
 
-  .table-header {
-    padding: 10px 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .table-name-ko { font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
-  .table-name-en { font-size: 9px; color: rgba(255,255,255,0.6); font-style: italic; margin-top: 1px; }
-  .table-badge {
-    font-size: 9px;
-    padding: 2px 7px;
-    border-radius: 10px;
-    font-weight: 600;
-    background: rgba(255,255,255,0.2);
-    color: #fff;
-  }
+    #canvas-wrap {
+      position: fixed;
+      top: 48px;
+      left: 0;
+      right: 0;
+      bottom: 26px;
+      overflow: hidden;
+      cursor: grab;
+      background: #f5f5f5;
+      background-image: radial-gradient(#ddd 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
 
-  .table-fields { border-top: 1px solid #f0f0f0; }
-  .field-row {
-    display: flex;
-    align-items: center;
-    padding: 5px 10px;
-    border-bottom: 1px solid #f5f5f5;
-    gap: 6px;
-    font-size: 10px;
-  }
-  .field-row:last-child { border-bottom: none; }
-  .field-icon { width: 14px; font-size: 9px; flex-shrink: 0; text-align: center; }
-  .field-name { color: #333; flex: 1; }
-  .field-type { color: #aaa; font-size: 9px; }
-  .field-row.pk { background: #fffde7; }
-  .field-row.pk .field-name { color: #f57f17; font-weight: 600; }
-  .field-row.fk { background: #e8f5e9; }
-  .field-row.fk .field-name { color: #2e7d32; }
-  .field-row.nn .field-name { color: #b71c1c; }
-  .field-divider { height: 1px; background: #eee; margin: 0; }
+    #canvas-wrap.dragging {
+      cursor: grabbing;
+    }
 
-  /* 사이드 패널 */
-  #side-panel {
-    position: fixed;
-    top: 48px; right: -300px;
-    width: 280px;
-    bottom: 26px;
-    background: #fff;
-    border-left: 1px solid #e0e0e0;
-    transition: right 0.2s ease;
-    z-index: 500;
-    overflow-y: auto;
-    padding: 20px 16px;
-    box-shadow: -2px 0 8px rgba(0,0,0,0.06);
-  }
-  #side-panel.open { right: 0; }
+    #canvas {
+      position: absolute;
+      transform-origin: 0 0;
+    }
 
-  .panel-title { font-size: 14px; font-weight: 700; color: #222; margin-bottom: 2px; }
-  .panel-sub { font-size: 10px; color: #aaa; margin-bottom: 16px; font-style: italic; }
-  .panel-section { margin-bottom: 16px; }
-  .panel-section-title {
-    font-size: 9px;
-    color: #aaa;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-    border-bottom: 1px solid #f0f0f0;
-    padding-bottom: 4px;
-  }
-  .panel-field {
-    display: flex;
-    justify-content: space-between;
-    padding: 5px 0;
-    border-bottom: 1px solid #f5f5f5;
-    font-size: 10px;
-  }
-  .panel-field:last-child { border-bottom: none; }
-  .pf-left { display: flex; align-items: center; gap: 6px; }
-  .pf-icon { font-size: 9px; width: 12px; text-align: center; }
-  .pf-name { color: #333; }
-  .pf-type { color: #aaa; }
-  .pf-comment { font-size: 9px; color: #bbb; margin-top: 1px; padding-left: 18px; }
+    svg#lines {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      overflow: visible;
+    }
 
-  #statusbar {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    height: 26px;
-    background: #fff;
-    border-top: 1px solid #e0e0e0;
-    display: flex;
-    align-items: center;
-    padding: 0 16px;
-    gap: 20px;
-    font-size: 10px;
-    color: #bbb;
-    z-index: 1000;
-  }
-  #statusbar b { color: #888; }
-</style>
+    .table-card {
+      position: absolute;
+      width: 250px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #ddd;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      cursor: move;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .table-card:hover {
+      border-color: #aaa;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .table-card.selected {
+      border-color: #c62828;
+      box-shadow: 0 0 0 2px rgba(198, 40, 40, 0.2), 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .table-header {
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .table-name-ko {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+
+    .table-name-en {
+      font-size: 9px;
+      color: rgba(255, 255, 255, 0.6);
+      font-style: italic;
+      margin-top: 1px;
+    }
+
+    .table-badge {
+      font-size: 9px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+
+    .table-fields {
+      border-top: 1px solid #f0f0f0;
+    }
+
+    .field-row {
+      display: flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-bottom: 1px solid #f5f5f5;
+      gap: 6px;
+      font-size: 10px;
+    }
+
+    .field-row:last-child {
+      border-bottom: none;
+    }
+
+    .field-icon {
+      width: 14px;
+      font-size: 9px;
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .field-name {
+      color: #333;
+      flex: 1;
+    }
+
+    .field-type {
+      color: #aaa;
+      font-size: 9px;
+    }
+
+    .field-row.pk {
+      background: #fffde7;
+    }
+
+    .field-row.pk .field-name {
+      color: #f57f17;
+      font-weight: 600;
+    }
+
+    .field-row.fk {
+      background: #e8f5e9;
+    }
+
+    .field-row.fk .field-name {
+      color: #2e7d32;
+    }
+
+    .field-row.nn .field-name {
+      color: #b71c1c;
+    }
+
+    .field-divider {
+      height: 1px;
+      background: #eee;
+      margin: 0;
+    }
+
+    /* 사이드 패널 */
+    #side-panel {
+      position: fixed;
+      top: 48px;
+      right: -300px;
+      width: 280px;
+      bottom: 26px;
+      background: #fff;
+      border-left: 1px solid #e0e0e0;
+      transition: right 0.2s ease;
+      z-index: 500;
+      overflow-y: auto;
+      padding: 20px 16px;
+      box-shadow: -2px 0 8px rgba(0, 0, 0, 0.06);
+    }
+
+    #side-panel.open {
+      right: 0;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #222;
+      margin-bottom: 2px;
+    }
+
+    .panel-sub {
+      font-size: 10px;
+      color: #aaa;
+      margin-bottom: 16px;
+      font-style: italic;
+    }
+
+    .panel-section {
+      margin-bottom: 16px;
+    }
+
+    .panel-section-title {
+      font-size: 9px;
+      color: #aaa;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      border-bottom: 1px solid #f0f0f0;
+      padding-bottom: 4px;
+    }
+
+    .panel-field {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid #f5f5f5;
+      font-size: 10px;
+    }
+
+    .panel-field:last-child {
+      border-bottom: none;
+    }
+
+    .pf-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pf-icon {
+      font-size: 9px;
+      width: 12px;
+      text-align: center;
+    }
+
+    .pf-name {
+      color: #333;
+    }
+
+    .pf-type {
+      color: #aaa;
+    }
+
+    .pf-comment {
+      font-size: 9px;
+      color: #bbb;
+      margin-top: 1px;
+      padding-left: 18px;
+    }
+
+    #statusbar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 26px;
+      background: #fff;
+      border-top: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 20px;
+      font-size: 10px;
+      color: #bbb;
+      z-index: 1000;
+    }
+
+    #statusbar b {
+      color: #888;
+    }
+  </style>
 </head>
+
 <body>
 
-<div id="toolbar">
-  <img src="miniERP.png" height="30" alt="miniERP" style="object-fit:contain;">
-  <div style="font-size:10px;color:#aaa;">ERD Diagram</div>
-  <div class="divider"></div>
-  <button class="btn" onclick="resetView()">⌂ 전체보기</button>
-  <button class="btn" onclick="toggleLines()">⟷ 관계선</button>
-  <div class="zone-filter" id="zoneFilter"></div>
-</div>
-
-<div id="canvas-wrap">
-  <div id="canvas">
-    <svg id="lines"></svg>
+  <div id="toolbar">
+    <img src="miniERP.png" height="30" alt="miniERP" style="object-fit:contain;">
+    <div style="font-size:10px;color:#aaa;">ERD Diagram</div>
+    <div class="divider"></div>
+    <button class="btn" onclick="resetView()">⌂ 전체보기</button>
+    <button class="btn" onclick="toggleLines()">⟷ 관계선</button>
+    <div class="zone-filter" id="zoneFilter"></div>
   </div>
-</div>
 
-<div id="side-panel">
-  <div id="panel-content"></div>
-</div>
+  <div id="canvas-wrap">
+    <div id="canvas">
+      <svg id="lines"></svg>
+    </div>
+  </div>
 
-<div id="statusbar">
-  <span>테이블 <b id="st-tables">0</b></span>
-  <span>관계 <b id="st-rels">0</b></span>
-  <span id="st-zoom">zoom 100%</span>
-  <span id="st-selected" style="margin-left:auto;color:#c62828;font-weight:600;"></span>
-</div>
+  <div id="side-panel">
+    <div id="panel-content"></div>
+  </div>
 
-<script>
-const ZONES = {
-  '상품': { color: '#c62828', tables: ['vendor','brand','product','product_document','bom'] },
-  '물류': { color: '#1565c0', tables: ['store','warehouse','warehouse_store','gwp','promotion','purchase_order','inventory'] },
-  '판매': { color: '#2e7d32', tables: ['sales','settlement'] }
-};
+  <div id="statusbar">
+    <span>테이블 <b id="st-tables">0</b></span>
+    <span>관계 <b id="st-rels">0</b></span>
+    <span id="st-zoom">zoom 100%</span>
+    <span id="st-selected" style="margin-left:auto;color:#c62828;font-weight:600;"></span>
+  </div>
 
-const TABLES = [
-  {
-    id: 'vendor', name: '협력사', pName: 'vendor', x: 60, y: 60,
-    pks: [{ name:'협력사코드', pName:'vendor_cd', type:'VARCHAR(6)', comment:'협력사(영어)명 3자+입점년도' }],
-    fields: [{ name:'협력사명', pName:'vendor_nm', type:'VARCHAR(200)', comment:'', nullable:true }]
-  },
-  {
-    id: 'brand', name: '브랜드', pName: 'brand', x: 60, y: 240,
-    pks: [{ name:'브랜드코드', pName:'brand_cd', type:'VARCHAR(6)', comment:'브랜드(영어)명 3자+입점년도' }],
-    fields: [
-      { name:'협력사코드', pName:'vendor_cd', type:'VARCHAR(6)', comment:'FK', nullable:false, fk:true },
-      { name:'브랜드명', pName:'brand_nm', type:'VARCHAR(200)', comment:'', nullable:false },
-      { name:'토산/수입', pName:'brand_type', type:'VARCHAR(10)', comment:'DOMESTIC/IMPORT', nullable:false },
-      { name:'공급률', pName:'supply_rate', type:'NUMERIC(5,2)', comment:'', nullable:true }
-    ]
-  },
-  {
-    id: 'product', name: '상품', pName: 'product', x: 60, y: 500,
-    pks: [{ name:'품번', pName:'product_no', type:'VARCHAR(8)', comment:'상품(영어)명 3자+입점년월' }],
-    fields: [
-      { name:'브랜드코드', pName:'brand_cd', type:'VARCHAR(6)', comment:'FK', nullable:false, fk:true },
-      { name:'협력사코드', pName:'vendor_cd', type:'VARCHAR(6)', comment:'FK', nullable:false, fk:true },
-      { name:'상품명(한글)', pName:'product_nm_ko', type:'VARCHAR(200)', comment:'', nullable:false },
-      { name:'상품명(영어)', pName:'product_nm_en', type:'VARCHAR(100)', comment:'', nullable:true },
-      { name:'용량', pName:'capacity', type:'NUMERIC(9)', comment:'단위 제외', nullable:true },
-      { name:'단위', pName:'unit', type:'VARCHAR(5)', comment:'EA/ml/g/inch', nullable:true },
-      { name:'바코드', pName:'barcode', type:'VARCHAR(20)', comment:'88코드', nullable:true },
-      { name:'정상가', pName:'retail_price', type:'NUMERIC(9)', comment:'', nullable:false },
-      { name:'판매가', pName:'sale_price', type:'NUMERIC(9)', comment:'프로모션가', nullable:true },
-      { name:'매입원가', pName:'cost_price', type:'NUMERIC(9)', comment:'완사입', nullable:true },
-      { name:'공급원가', pName:'supply_cost', type:'NUMERIC(9)', comment:'위탁판매', nullable:true },
-      { name:'제조원가', pName:'mfg_cost', type:'NUMERIC(9)', comment:'자사제품', nullable:true },
-      { name:'원가계산기준', pName:'cost_base', type:'VARCHAR(10)', comment:'RETAIL or SALE', nullable:true }
-    ]
-  },
-  {
-    id: 'product_document', name: '상품서류', pName: 'product_document', x: 400, y: 60,
-    pks: [{ name:'서류ID', pName:'doc_id', type:'SERIAL', comment:'자동증가' }],
-    fields: [
-      { name:'품번', pName:'product_no', type:'VARCHAR(8)', comment:'FK', nullable:false, fk:true },
-      { name:'서류종류', pName:'doc_type', type:'VARCHAR(20)', comment:'IMPORT_CERT/BSE 등', nullable:true },
-      { name:'파일명', pName:'doc_nm', type:'VARCHAR(200)', comment:'', nullable:true },
-      { name:'파일경로', pName:'file_url', type:'VARCHAR(500)', comment:'', nullable:true },
-      { name:'만료일', pName:'expire_date', type:'DATE', comment:'', nullable:true },
-      { name:'등록일시', pName:'created_at', type:'TIMESTAMP', comment:'', nullable:true }
-    ]
-  },
-  {
-    id: 'bom', name: 'BOM구성', pName: 'bom', x: 400, y: 380,
-    pks: [{ name:'구성ID', pName:'bom_id', type:'SERIAL', comment:'자동증가' }],
-    fields: [
-      { name:'완제품품번', pName:'parent_no', type:'VARCHAR(8)', comment:'FK → product', nullable:false, fk:true },
-      { name:'구성품품번', pName:'child_no', type:'VARCHAR(8)', comment:'FK → product', nullable:false, fk:true },
-      { name:'구성수량', pName:'qty', type:'NUMERIC(9)', comment:'', nullable:true },
-      { name:'구성유형', pName:'bom_type', type:'VARCHAR(10)', comment:'SET/GWP/SAMPLE', nullable:true },
-      { name:'지점ID', pName:'store_id', type:'INT', comment:'NULL이면 전체공통', nullable:true, fk:true },
-      { name:'시작일', pName:'start_date', type:'DATE', comment:'', nullable:true },
-      { name:'종료일', pName:'end_date', type:'DATE', comment:'', nullable:true },
-      { name:'활성여부', pName:'is_active', type:'VARCHAR(1)', comment:'Y/N', nullable:true },
-      { name:'비고', pName:'memo', type:'VARCHAR(200)', comment:'', nullable:true }
-    ]
-  },
-  {
-    id: 'store', name: '지점', pName: 'store', x: 760, y: 60,
-    pks: [{ name:'지점ID', pName:'store_id', type:'SERIAL', comment:'자동증가' }],
-    fields: [
-      { name:'지점명', pName:'store_nm', type:'VARCHAR(200)', comment:'', nullable:true },
-      { name:'지점유형', pName:'store_type', type:'VARCHAR(20)', comment:'백화점/공항/시내', nullable:true },
-      { name:'면세점코드', pName:'store_cd', type:'VARCHAR(20)', comment:'', nullable:true }
-    ]
-  },
-  {
-    id: 'warehouse', name: '창고', pName: 'warehouse', x: 760, y: 280,
-    pks: [{ name:'창고ID', pName:'warehouse_id', type:'SERIAL', comment:'자동증가' }],
-    fields: [{ name:'창고명', pName:'warehouse_nm', type:'VARCHAR(200)', comment:'', nullable:true }]
-  },
-  {
-    id: 'warehouse_store', name: '창고-지점', pName: 'warehouse_store', x: 760, y: 430,
-    pks: [
-      { name:'창고ID', pName:'warehouse_id', type:'INT', comment:'FK', fk:true },
-      { name:'지점ID', pName:'store_id', type:'INT', comment:'FK', fk:true }
-    ],
-    fields: [{ name:'주창고여부', pName:'is_primary', type:'VARCHAR(1)', comment:'Y/N', nullable:true }]
-  },
-  {
-    id: 'gwp', name: 'GWP증정품', pName: 'gwp', x: 400, y: 580,
-    pks: [{ name:'증정품ID', pName:'gwp_id', type:'SERIAL', comment:'자동증가' }],
-    fields: [
-      { name:'본품품번', pName:'product_no', type:'VARCHAR(8)', comment:'FK', nullable:false, fk:true },
-      { name:'지점ID', pName:'store_id', type:'INT', comment:'FK', nullable:false, fk:true },
-      { name:'구성ID', pName:'bom_id', type:'INT', comment:'BOM FK (증정품 구성 참조)', nullable:true, fk:true },
-      { name:'증정품명', pName:'gift_nm', type:'VARCHAR(200)', comment:'미등록시', nullable:true },
-      { name:'증정수량', pName:'gift_qty', type:'NUMERIC(9)', comment:'', nullable:true },
-      { name:'최소구매금액', pName:'min_purchase', type:'NUMERIC(9)', comment:'', nullable:true },
-      { name:'시작일', pName:'start_date', type:'DATE', comment:'', nullable:true },
-      { name:'종료일', pName:'end_date', type:'DATE', comment:'', nullable:true }
-    ]
-  },
-  {
-    id: 'promotion', name: '프로모션', pName: 'promotion', x: 760, y: 600,
-    pks: [{ name:'프로모션ID', pName:'promo_id', type:'SERIAL', comment:'자동증가' }],
-    fields: [
-      { name:'지점ID', pName:'store_id', type:'INT', comment:'FK', nullable:false, fk:true },
-      { name:'품번', pName:'product_no', type:'VARCHAR(8)', comment:'FK', nullable:false, fk:true },
-      { name:'프로모션명', pName:'promo_nm', type:'VARCHAR(200)', comment:'추석특가 등', nullable:true },
-      { name:'프로모션가', pName:'promo_price', type:'NUMERIC(9)', comment:'', nullable:true },
-      { name:'시작일', pName:'start_date', type:'DATE', comment:'', nullable:true },
-      { name:'종료일', pName:'end_date', type:'DATE', comment:'', nullable:true }
-    ]
-  },
-  {
-    id: 'purchase_order', name: '발주/입고', pName: 'purchase_order', x: 60, y: 960,
-    pks: [{ name:'발주ID', pName:'order_id', type:'SERIAL', comment:'자동증가' }],
-    fields: [
-      { name:'발주지점', pName:'store_id', type:'INT', comment:'FK', nullable:false, fk:true },
-      { name:'입고창고', pName:'warehouse_id', type:'INT', comment:'FK', nullable:false, fk:true },
-      { name:'품번', pName:'product_no', type:'VARCHAR(8)', comment:'FK', nullable:false, fk:true },
-      { name:'브랜드코드', pName:'brand_cd', type:'VARCHAR(6)', comment:'', nullable:false },
-      { name:'협력사코드', pName:'vendor_cd', type:'VARCHAR(6)', comment:'', nullable:false },
-      { name:'발주수량', pName:'order_qty', type:'NUMERIC(9)', comment:'', nullable:true },
-      { name:'승인수량', pName:'approved_qty', type:'NUMERIC(9)', comment:'SCM 승인', nullable:true },
-      { name:'상태', pName:'status', type:'VARCHAR(10)', comment:'PENDING/APPROVED/REJECTED', nullable:true },
-      { name:'발주일시', pName:'created_at', type:'TIMESTAMP', comment:'', nullable:true }
-    ]
-  },
-  {
-    id: 'inventory', name: '통합수불부', pName: 'inventory', x: 400, y: 860,
-    pks: [{ name:'수불번호', pName:'inv_id', type:'SERIAL', comment:'자동증가' }],
-    fields: [
-      { name:'창고ID', pName:'warehouse_id', type:'INT', comment:'FK (NULL가능)', nullable:true, fk:true },
-      { name:'지점ID', pName:'store_id', type:'INT', comment:'FK (NULL가능)', nullable:true, fk:true },
-      { name:'품번', pName:'product_no', type:'VARCHAR(8)', comment:'FK', nullable:false, fk:true },
-      { name:'브랜드코드', pName:'brand_cd', type:'VARCHAR(6)', comment:'', nullable:false },
-      { name:'협력사코드', pName:'vendor_cd', type:'VARCHAR(6)', comment:'', nullable:false },
-      { name:'로트번호', pName:'lot_no', type:'VARCHAR(50)', comment:'', nullable:true },
-      { name:'유통기한', pName:'expire_date', type:'DATE', comment:'', nullable:true },
-      { name:'이동유형', pName:'move_type', type:'VARCHAR(10)', comment:'IN/OUT/TRANSFER', nullable:true },
-      { name:'수량', pName:'qty', type:'NUMERIC(9)', comment:'', nullable:true },
-      { name:'참조ID', pName:'ref_id', type:'NUMERIC(9)', comment:'발주ID or 판매ID', nullable:true },
-      { name:'수불일시', pName:'created_at', type:'TIMESTAMP', comment:'', nullable:true }
-    ]
-  },
-  {
-    id: 'sales', name: '판매', pName: 'sales', x: 60, y: 1260,
-    pks: [{ name:'판매ID', pName:'sale_id', type:'SERIAL', comment:'자동증가' }],
-    fields: [
-      { name:'지점ID', pName:'store_id', type:'INT', comment:'FK', nullable:false, fk:true },
-      { name:'품번', pName:'product_no', type:'VARCHAR(8)', comment:'FK', nullable:false, fk:true },
-      { name:'브랜드코드', pName:'brand_cd', type:'VARCHAR(6)', comment:'', nullable:false },
-      { name:'협력사코드', pName:'vendor_cd', type:'VARCHAR(6)', comment:'', nullable:false },
-      { name:'채널', pName:'channel', type:'VARCHAR(10)', comment:'ONLINE/OFFLINE', nullable:true },
-      { name:'주문번호', pName:'order_no', type:'VARCHAR(50)', comment:'온라인 주문번호', nullable:true },
-      { name:'로트번호', pName:'lot_no', type:'VARCHAR(50)', comment:'', nullable:true },
-      { name:'판매수량', pName:'sale_qty', type:'NUMERIC(9)', comment:'', nullable:true },
-      { name:'판매가', pName:'sale_price', type:'NUMERIC(9)', comment:'실제 결제가 스냅샷', nullable:true },
-      { name:'프로모션ID', pName:'promo_id', type:'INT', comment:'FK', nullable:true, fk:true },
-      { name:'판매일시', pName:'sale_at', type:'TIMESTAMP', comment:'', nullable:true }
-    ]
-  },
-  {
-    id: 'settlement', name: '정산', pName: 'settlement', x: 400, y: 1260,
-    pks: [{ name:'정산ID', pName:'settlement_id', type:'SERIAL', comment:'자동증가' }],
-    fields: [
-      { name:'협력사코드', pName:'vendor_cd', type:'VARCHAR(6)', comment:'FK', nullable:false, fk:true },
-      { name:'브랜드코드', pName:'brand_cd', type:'VARCHAR(6)', comment:'FK', nullable:false, fk:true },
-      { name:'지점ID', pName:'store_id', type:'INT', comment:'FK', nullable:false, fk:true },
-      { name:'정산월', pName:'settle_month', type:'VARCHAR(7)', comment:'YYYY-MM', nullable:true },
-      { name:'기초재고', pName:'opening_qty', type:'NUMERIC(9)', comment:'', nullable:true },
-      { name:'입고수량', pName:'in_qty', type:'NUMERIC(9)', comment:'', nullable:true },
-      { name:'반출수량', pName:'return_qty', type:'NUMERIC(9)', comment:'', nullable:true },
-      { name:'기말재고', pName:'closing_qty', type:'NUMERIC(9)', comment:'', nullable:true },
-      { name:'판매수량', pName:'sale_qty', type:'NUMERIC(9)', comment:'', nullable:true },
-      { name:'판매금액', pName:'sale_amt', type:'NUMERIC(15)', comment:'VAT포함', nullable:true },
-      { name:'공급가액', pName:'supply_amt', type:'NUMERIC(15)', comment:'', nullable:true },
-      { name:'부가세', pName:'vat_amt', type:'NUMERIC(15)', comment:'', nullable:true },
-      { name:'세금계산서', pName:'tax_invoice_amt', type:'NUMERIC(15)', comment:'', nullable:true },
-      { name:'매장운영비', pName:'store_fee', type:'NUMERIC(15)', comment:'', nullable:true },
-      { name:'인센티브', pName:'incentive_amt', type:'NUMERIC(15)', comment:'', nullable:true },
-      { name:'실지급액', pName:'final_amt', type:'NUMERIC(15)', comment:'', nullable:true },
-      { name:'정산상태', pName:'settle_status', type:'VARCHAR(10)', comment:'PENDING/CONFIRMED/PAID', nullable:true },
-      { name:'생성일시', pName:'created_at', type:'TIMESTAMP', comment:'', nullable:true }
-    ]
-  }
-];
+  <script>
+    const ZONES = {
+      auth: { color: '#5c6bc0', tables: ['app_user'], label: '인증' },
+      '상품': { color: '#c62828', tables: ['vendor', 'brand', 'product', 'product_document', 'bom'], label: '상품' },
+      '물류': { color: '#1565c0', tables: ['store', 'warehouse', 'warehouse_store', 'gwp', 'promotion', 'purchase_order', 'inventory'], label: '물류' },
+      '판매': { color: '#2e7d32', tables: ['sales', 'settlement'], label: '판매' }
+    };
 
-const RELATIONS = [
-  { from:'vendor',    to:'brand',            label:'1:N' },
-  { from:'brand',     to:'product',          label:'1:N' },
-  { from:'vendor',    to:'product',          label:'1:N' },
-  { from:'product',   to:'product_document', label:'1:N' },
-  { from:'product',   to:'bom',              label:'1:N' },
-  { from:'product',   to:'gwp',              label:'1:N' },
-  { from:'bom',       to:'gwp',              label:'1:N' },
-  { from:'store',    to:'bom',              label:'1:N' },
-  { from:'store',     to:'warehouse_store',  label:'N:M' },
-  { from:'warehouse', to:'warehouse_store',  label:'N:M' },
-  { from:'store',     to:'gwp',              label:'1:N' },
-  { from:'store',     to:'promotion',        label:'1:N' },
-  { from:'product',   to:'promotion',        label:'1:N' },
-  { from:'store',     to:'purchase_order',   label:'1:N' },
-  { from:'warehouse', to:'purchase_order',   label:'1:N' },
-  { from:'product',   to:'purchase_order',   label:'1:N' },
-  { from:'warehouse', to:'inventory',        label:'1:N' },
-  { from:'store',     to:'inventory',        label:'1:N' },
-  { from:'product',   to:'inventory',        label:'1:N' },
-  { from:'store',     to:'sales',            label:'1:N' },
-  { from:'product',   to:'sales',            label:'1:N' },
-  { from:'promotion', to:'sales',            label:'1:N' },
-  { from:'vendor',    to:'settlement',       label:'1:N' },
-  { from:'brand',     to:'settlement',       label:'1:N' },
-  { from:'store',     to:'settlement',       label:'1:N' }
-];
+    const TABLES = [
+      {
+        id: 'app_user', name: '시스템사용자', pName: 'app_user', x: 1100, y: 60,
+        pks: [{ name: '사용자ID', pName: 'id', type: 'BIGSERIAL', comment: '자동증가' }],
+        fields: [
+          { name: '아이디', pName: 'username', type: 'VARCHAR(50)', comment: 'UNIQUE', nullable: false },
+          { name: '비밀번호', pName: 'password', type: 'VARCHAR(255)', comment: 'BCrypt 해시', nullable: false },
+          { name: '이름', pName: 'name', type: 'VARCHAR(50)', comment: '', nullable: true },
+          { name: '권한', pName: 'role', type: 'VARCHAR(20)', comment: 'USER/ADMIN', nullable: true },
+          { name: '활성여부', pName: 'is_active', type: 'BOOLEAN', comment: '', nullable: true },
+          { name: '생성일시', pName: 'created_at', type: 'TIMESTAMP', comment: '', nullable: true }
+        ]
+      },
+      {
+        id: 'vendor', name: '협력사', pName: 'vendor', x: 60, y: 60,
+        pks: [{ name: '협력사코드', pName: 'vendor_cd', type: 'VARCHAR(6)', comment: '협력사(영어)명 3자+입점년도' }],
+        fields: [{ name: '협력사명', pName: 'vendor_nm', type: 'VARCHAR(200)', comment: '', nullable: true }]
+      },
+      {
+        id: 'brand', name: '브랜드', pName: 'brand', x: 60, y: 240,
+        pks: [{ name: '브랜드코드', pName: 'brand_cd', type: 'VARCHAR(6)', comment: '브랜드(영어)명 3자+입점년도' }],
+        fields: [
+          { name: '협력사코드', pName: 'vendor_cd', type: 'VARCHAR(6)', comment: 'FK', nullable: false, fk: true },
+          { name: '브랜드명', pName: 'brand_nm', type: 'VARCHAR(200)', comment: '', nullable: false },
+          { name: '토산/수입', pName: 'brand_type', type: 'VARCHAR(10)', comment: 'DOMESTIC/IMPORT', nullable: false },
+          { name: '공급률', pName: 'supply_rate', type: 'NUMERIC(5,2)', comment: '', nullable: true }
+        ]
+      },
+      {
+        id: 'product', name: '상품', pName: 'product', x: 60, y: 500,
+        pks: [{ name: '품번', pName: 'product_no', type: 'VARCHAR(8)', comment: '상품(영어)명 3자+입점년월' }],
+        fields: [
+          { name: '브랜드코드', pName: 'brand_cd', type: 'VARCHAR(6)', comment: 'FK', nullable: false, fk: true },
+          { name: '협력사코드', pName: 'vendor_cd', type: 'VARCHAR(6)', comment: 'FK', nullable: false, fk: true },
+          { name: '상품명(한글)', pName: 'product_nm_ko', type: 'VARCHAR(200)', comment: '', nullable: false },
+          { name: '상품명(영어)', pName: 'product_nm_en', type: 'VARCHAR(100)', comment: '', nullable: true },
+          { name: '용량', pName: 'capacity', type: 'NUMERIC(9)', comment: '단위 제외', nullable: true },
+          { name: '단위', pName: 'unit', type: 'VARCHAR(5)', comment: 'EA/ml/g/inch', nullable: true },
+          { name: '바코드', pName: 'barcode', type: 'VARCHAR(20)', comment: '88코드', nullable: true },
+          { name: '정상가', pName: 'retail_price', type: 'NUMERIC(9)', comment: '', nullable: false },
+          { name: '판매가', pName: 'sale_price', type: 'NUMERIC(9)', comment: '프로모션가', nullable: true },
+          { name: '매입원가', pName: 'cost_price', type: 'NUMERIC(9)', comment: '완사입', nullable: true },
+          { name: '공급원가', pName: 'supply_cost', type: 'NUMERIC(9)', comment: '위탁판매', nullable: true },
+          { name: '제조원가', pName: 'mfg_cost', type: 'NUMERIC(9)', comment: '자사제품', nullable: true },
+          { name: '원가계산기준', pName: 'cost_base', type: 'VARCHAR(10)', comment: 'RETAIL or SALE', nullable: true },
+          { name: '이미지URL', pName: 'image_url', type: 'VARCHAR(500)', comment: '썸네일 경로', nullable: true },
+          { name: '박스당입수', pName: 'qty_per_box', type: 'INT', comment: '박스당 EA 수', nullable: true },
+          { name: '파레트당박스', pName: 'box_per_pallet', type: 'INT', comment: '파레트당 박스 수', nullable: true }
+        ]
+      },
+      {
+        id: 'product_document', name: '상품서류', pName: 'product_document', x: 400, y: 60,
+        pks: [{ name: '서류ID', pName: 'doc_id', type: 'SERIAL', comment: '자동증가' }],
+        fields: [
+          { name: '품번', pName: 'product_no', type: 'VARCHAR(8)', comment: 'FK', nullable: false, fk: true },
+          { name: '서류종류', pName: 'doc_type', type: 'VARCHAR(20)', comment: 'IMPORT_CERT/BSE 등', nullable: true },
+          { name: '파일명', pName: 'doc_nm', type: 'VARCHAR(200)', comment: '', nullable: true },
+          { name: '파일경로', pName: 'file_url', type: 'VARCHAR(500)', comment: '', nullable: true },
+          { name: '만료일', pName: 'expire_date', type: 'DATE', comment: '', nullable: true },
+          { name: '등록일시', pName: 'created_at', type: 'TIMESTAMP', comment: '', nullable: true }
+        ]
+      },
+      {
+        id: 'bom', name: 'BOM구성', pName: 'bom', x: 400, y: 380,
+        pks: [{ name: '구성ID', pName: 'bom_id', type: 'SERIAL', comment: '자동증가' }],
+        fields: [
+          { name: '완제품품번', pName: 'parent_no', type: 'VARCHAR(8)', comment: 'FK → product', nullable: false, fk: true },
+          { name: '구성품품번', pName: 'child_no', type: 'VARCHAR(8)', comment: 'FK → product', nullable: false, fk: true },
+          { name: '구성수량', pName: 'qty', type: 'NUMERIC(9)', comment: '', nullable: true },
+          { name: '구성유형', pName: 'bom_type', type: 'VARCHAR(10)', comment: 'SET/GWP/SAMPLE', nullable: true },
+          { name: '지점ID', pName: 'store_id', type: 'INT', comment: 'NULL이면 전체공통', nullable: true, fk: true },
+          { name: '시작일', pName: 'start_date', type: 'DATE', comment: '', nullable: true },
+          { name: '종료일', pName: 'end_date', type: 'DATE', comment: '', nullable: true },
+          { name: '활성여부', pName: 'is_active', type: 'VARCHAR(1)', comment: 'Y/N', nullable: true },
+          { name: '비고', pName: 'memo', type: 'VARCHAR(200)', comment: '', nullable: true }
+        ]
+      },
+      {
+        id: 'store', name: '지점', pName: 'store', x: 760, y: 60,
+        pks: [{ name: '지점ID', pName: 'store_id', type: 'SERIAL', comment: '자동증가' }],
+        fields: [
+          { name: '지점명', pName: 'store_nm', type: 'VARCHAR(200)', comment: '', nullable: true },
+          { name: '지점유형', pName: 'store_type', type: 'VARCHAR(20)', comment: '백화점/공항/시내', nullable: true },
+          { name: '면세점코드', pName: 'store_cd', type: 'VARCHAR(20)', comment: '', nullable: true }
+        ]
+      },
+      {
+        id: 'warehouse', name: '창고', pName: 'warehouse', x: 760, y: 280,
+        pks: [{ name: '창고ID', pName: 'warehouse_id', type: 'SERIAL', comment: '자동증가' }],
+        fields: [
+          { name: '창고명', pName: 'warehouse_nm', type: 'VARCHAR(200)', comment: '', nullable: true },
+          { name: '창고유형', pName: 'warehouse_type', type: 'VARCHAR(20)', comment: '공항/시내/물류센터', nullable: true },
+          { name: '위치', pName: 'location', type: 'VARCHAR(200)', comment: '', nullable: true },
+          { name: '담당자', pName: 'manager', type: 'VARCHAR(50)', comment: '', nullable: true },
+          { name: '연락처', pName: 'phone', type: 'VARCHAR(20)', comment: '', nullable: true },
+          { name: '상태', pName: 'status', type: 'VARCHAR(10)', comment: '사용중/미사용', nullable: true },
+          { name: '파레트당물류비', pName: 'cost_per_pallet', type: 'NUMERIC(9)', comment: '파레트당 물류비', nullable: true }
+        ]
+      },
+      {
+        id: 'warehouse_store', name: '창고-지점', pName: 'warehouse_store', x: 760, y: 430,
+        pks: [
+          { name: '창고ID', pName: 'warehouse_id', type: 'INT', comment: 'FK', fk: true },
+          { name: '지점ID', pName: 'store_id', type: 'INT', comment: 'FK', fk: true }
+        ],
+        fields: [{ name: '주창고여부', pName: 'is_primary', type: 'VARCHAR(1)', comment: 'Y/N', nullable: true }]
+      },
+      {
+        id: 'gwp', name: 'GWP증정품', pName: 'gwp', x: 400, y: 580,
+        pks: [{ name: '증정품ID', pName: 'gwp_id', type: 'SERIAL', comment: '자동증가' }],
+        fields: [
+          { name: '본품품번', pName: 'product_no', type: 'VARCHAR(8)', comment: 'FK', nullable: false, fk: true },
+          { name: '지점ID', pName: 'store_id', type: 'INT', comment: 'FK', nullable: false, fk: true },
+          { name: '구성ID', pName: 'bom_id', type: 'INT', comment: 'BOM FK (증정품 구성 참조)', nullable: true, fk: true },
+          { name: '증정품명', pName: 'gift_nm', type: 'VARCHAR(200)', comment: '미등록시', nullable: true },
+          { name: '증정수량', pName: 'gift_qty', type: 'NUMERIC(9)', comment: '', nullable: true },
+          { name: '최소구매금액', pName: 'min_purchase', type: 'NUMERIC(9)', comment: '', nullable: true },
+          { name: '시작일', pName: 'start_date', type: 'DATE', comment: '', nullable: true },
+          { name: '종료일', pName: 'end_date', type: 'DATE', comment: '', nullable: true }
+        ]
+      },
+      {
+        id: 'promotion', name: '프로모션', pName: 'promotion', x: 760, y: 600,
+        pks: [{ name: '프로모션ID', pName: 'promo_id', type: 'SERIAL', comment: '자동증가' }],
+        fields: [
+          { name: '지점ID', pName: 'store_id', type: 'INT', comment: 'FK', nullable: false, fk: true },
+          { name: '품번', pName: 'product_no', type: 'VARCHAR(8)', comment: 'FK', nullable: false, fk: true },
+          { name: '프로모션명', pName: 'promo_nm', type: 'VARCHAR(200)', comment: '추석특가 등', nullable: true },
+          { name: '프로모션가', pName: 'promo_price', type: 'NUMERIC(9)', comment: '', nullable: true },
+          { name: '시작일', pName: 'start_date', type: 'DATE', comment: '', nullable: true },
+          { name: '종료일', pName: 'end_date', type: 'DATE', comment: '', nullable: true }
+        ]
+      },
+      {
+        id: 'purchase_order', name: '발주/입고', pName: 'purchase_order', x: 60, y: 960,
+        pks: [{ name: '발주ID', pName: 'order_id', type: 'SERIAL', comment: '자동증가' }],
+        fields: [
+          { name: '발주지점', pName: 'store_id', type: 'INT', comment: 'FK', nullable: false, fk: true },
+          { name: '입고창고', pName: 'warehouse_id', type: 'INT', comment: 'FK', nullable: false, fk: true },
+          { name: '품번', pName: 'product_no', type: 'VARCHAR(8)', comment: 'FK', nullable: false, fk: true },
+          { name: '브랜드코드', pName: 'brand_cd', type: 'VARCHAR(6)', comment: '', nullable: false },
+          { name: '협력사코드', pName: 'vendor_cd', type: 'VARCHAR(6)', comment: '', nullable: false },
+          { name: '발주수량', pName: 'order_qty', type: 'NUMERIC(9)', comment: '', nullable: true },
+          { name: '승인수량', pName: 'approved_qty', type: 'NUMERIC(9)', comment: 'SCM 승인', nullable: true },
+          { name: '실입고수량', pName: 'received_qty', type: 'NUMERIC(9)', comment: '', nullable: true },
+          { name: '상태', pName: 'status', type: 'VARCHAR(10)', comment: 'PENDING/APPROVED/RECEIVED/REJECTED', nullable: true },
+          { name: '로트번호', pName: 'lot_no', type: 'VARCHAR(50)', comment: '입고 LOT', nullable: true },
+          { name: '유통기한', pName: 'expire_date', type: 'DATE', comment: '', nullable: true },
+          { name: '박스수', pName: 'box_count', type: 'NUMERIC(9)', comment: '자동계산', nullable: true },
+          { name: '파레트수', pName: 'pallet_count', type: 'NUMERIC(7,1)', comment: '자동계산', nullable: true },
+          { name: '물류비', pName: 'logistics_cost', type: 'NUMERIC(9)', comment: '자동계산', nullable: true },
+          { name: '물류메모', pName: 'logistics_memo', type: 'VARCHAR(200)', comment: '운송사/비고', nullable: true },
+          { name: '실입고일시', pName: 'received_at', type: 'TIMESTAMP', comment: '', nullable: true },
+          { name: '발주일시', pName: 'created_at', type: 'TIMESTAMP', comment: '', nullable: true }
+        ]
+      },
+      {
+        id: 'inventory', name: '통합수불부', pName: 'inventory', x: 400, y: 860,
+        pks: [{ name: '수불번호', pName: 'inv_id', type: 'SERIAL', comment: '자동증가' }],
+        fields: [
+          { name: '창고ID', pName: 'warehouse_id', type: 'INT', comment: 'FK (NULL가능)', nullable: true, fk: true },
+          { name: '지점ID', pName: 'store_id', type: 'INT', comment: 'FK (NULL가능)', nullable: true, fk: true },
+          { name: '품번', pName: 'product_no', type: 'VARCHAR(8)', comment: 'FK', nullable: false, fk: true },
+          { name: '브랜드코드', pName: 'brand_cd', type: 'VARCHAR(6)', comment: '', nullable: false },
+          { name: '협력사코드', pName: 'vendor_cd', type: 'VARCHAR(6)', comment: '', nullable: false },
+          { name: '로트번호', pName: 'lot_no', type: 'VARCHAR(50)', comment: '', nullable: true },
+          { name: '유통기한', pName: 'expire_date', type: 'DATE', comment: '', nullable: true },
+          { name: '이동유형', pName: 'move_type', type: 'VARCHAR(10)', comment: 'IN/OUT/TRANSFER', nullable: true },
+          { name: '수량', pName: 'qty', type: 'NUMERIC(9)', comment: '', nullable: true },
+          { name: '참조ID', pName: 'ref_id', type: 'NUMERIC(9)', comment: '발주ID or 판매ID', nullable: true },
+          { name: '수불일시', pName: 'created_at', type: 'TIMESTAMP', comment: '', nullable: true }
+        ]
+      },
+      {
+        id: 'sales', name: '판매', pName: 'sales', x: 60, y: 1260,
+        pks: [{ name: '판매ID', pName: 'sale_id', type: 'SERIAL', comment: '자동증가' }],
+        fields: [
+          { name: '지점ID', pName: 'store_id', type: 'INT', comment: 'FK', nullable: false, fk: true },
+          { name: '품번', pName: 'product_no', type: 'VARCHAR(8)', comment: 'FK', nullable: false, fk: true },
+          { name: '브랜드코드', pName: 'brand_cd', type: 'VARCHAR(6)', comment: '', nullable: false },
+          { name: '협력사코드', pName: 'vendor_cd', type: 'VARCHAR(6)', comment: '', nullable: false },
+          { name: '채널', pName: 'channel', type: 'VARCHAR(10)', comment: 'ONLINE/OFFLINE', nullable: true },
+          { name: '주문번호', pName: 'order_no', type: 'VARCHAR(50)', comment: '온라인 주문번호', nullable: true },
+          { name: '로트번호', pName: 'lot_no', type: 'VARCHAR(50)', comment: '', nullable: true },
+          { name: '판매수량', pName: 'sale_qty', type: 'NUMERIC(9)', comment: '', nullable: true },
+          { name: '판매가', pName: 'sale_price', type: 'NUMERIC(9)', comment: '실제 결제가 스냅샷', nullable: true },
+          { name: '프로모션ID', pName: 'promo_id', type: 'INT', comment: 'FK', nullable: true, fk: true },
+          { name: '판매일시', pName: 'sale_at', type: 'TIMESTAMP', comment: '', nullable: true }
+        ]
+      },
+      {
+        id: 'settlement', name: '정산', pName: 'settlement', x: 400, y: 1260,
+        pks: [{ name: '정산ID', pName: 'settlement_id', type: 'SERIAL', comment: '자동증가' }],
+        fields: [
+          { name: '협력사코드', pName: 'vendor_cd', type: 'VARCHAR(6)', comment: 'FK', nullable: false, fk: true },
+          { name: '브랜드코드', pName: 'brand_cd', type: 'VARCHAR(6)', comment: 'FK', nullable: false, fk: true },
+          { name: '지점ID', pName: 'store_id', type: 'INT', comment: 'FK', nullable: false, fk: true },
+          { name: '정산월', pName: 'settle_month', type: 'VARCHAR(7)', comment: 'YYYY-MM', nullable: true },
+          { name: '기초재고', pName: 'opening_qty', type: 'NUMERIC(9)', comment: '', nullable: true },
+          { name: '입고수량', pName: 'in_qty', type: 'NUMERIC(9)', comment: '', nullable: true },
+          { name: '반출수량', pName: 'return_qty', type: 'NUMERIC(9)', comment: '', nullable: true },
+          { name: '기말재고', pName: 'closing_qty', type: 'NUMERIC(9)', comment: '', nullable: true },
+          { name: '판매수량', pName: 'sale_qty', type: 'NUMERIC(9)', comment: '', nullable: true },
+          { name: '판매금액', pName: 'sale_amt', type: 'NUMERIC(15)', comment: 'VAT포함', nullable: true },
+          { name: '공급가액', pName: 'supply_amt', type: 'NUMERIC(15)', comment: '', nullable: true },
+          { name: '부가세', pName: 'vat_amt', type: 'NUMERIC(15)', comment: '', nullable: true },
+          { name: '세금계산서', pName: 'tax_invoice_amt', type: 'NUMERIC(15)', comment: '', nullable: true },
+          { name: '매장운영비', pName: 'store_fee', type: 'NUMERIC(15)', comment: '', nullable: true },
+          { name: '인센티브', pName: 'incentive_amt', type: 'NUMERIC(15)', comment: '', nullable: true },
+          { name: '실지급액', pName: 'final_amt', type: 'NUMERIC(15)', comment: '', nullable: true },
+          { name: '정산상태', pName: 'settle_status', type: 'VARCHAR(10)', comment: 'PENDING/CONFIRMED/PAID', nullable: true },
+          { name: '생성일시', pName: 'created_at', type: 'TIMESTAMP', comment: '', nullable: true }
+        ]
+      }
+    ];
 
-// ─── 상태 ─────────────────────────────────────────
-let scale = 0.65, offsetX = 30, offsetY = 20;
-let isPanning = false, panStart = {x:0,y:0};
-let isDraggingCard = false, dragCard = null, dragStart = {x:0,y:0}, dragOrigPos = {x:0,y:0};
-let selectedTable = null;
-let showLines = true;
-let activeZones = new Set(Object.keys(ZONES));
-const cardEls = {}, tablePos = {};
+    const RELATIONS = [
+      { from: 'vendor', to: 'brand', label: '1:N' },
+      { from: 'brand', to: 'product', label: '1:N' },
+      { from: 'vendor', to: 'product', label: '1:N' },
+      { from: 'product', to: 'product_document', label: '1:N' },
+      { from: 'product', to: 'bom', label: '1:N' },
+      { from: 'product', to: 'gwp', label: '1:N' },
+      { from: 'bom', to: 'gwp', label: '1:N' },
+      { from: 'store', to: 'bom', label: '1:N' },
+      { from: 'store', to: 'warehouse_store', label: 'N:M' },
+      { from: 'warehouse', to: 'warehouse_store', label: 'N:M' },
+      { from: 'store', to: 'gwp', label: '1:N' },
+      { from: 'store', to: 'promotion', label: '1:N' },
+      { from: 'product', to: 'promotion', label: '1:N' },
+      { from: 'store', to: 'purchase_order', label: '1:N' },
+      { from: 'warehouse', to: 'purchase_order', label: '1:N' },
+      { from: 'product', to: 'purchase_order', label: '1:N' },
+      { from: 'warehouse', to: 'inventory', label: '1:N' },
+      { from: 'store', to: 'inventory', label: '1:N' },
+      { from: 'product', to: 'inventory', label: '1:N' },
+      { from: 'store', to: 'sales', label: '1:N' },
+      { from: 'product', to: 'sales', label: '1:N' },
+      { from: 'promotion', to: 'sales', label: '1:N' },
+      { from: 'vendor', to: 'settlement', label: '1:N' },
+      { from: 'brand', to: 'settlement', label: '1:N' },
+      { from: 'store', to: 'settlement', label: '1:N' }
+    ];
 
-function getZoneColor(id) {
-  for (const [z,d] of Object.entries(ZONES)) if (d.tables.includes(id)) return d.color;
-  return '#888';
-}
-function getZoneName(id) {
-  for (const [z,d] of Object.entries(ZONES)) if (d.tables.includes(id)) return z;
-  return '';
-}
+    // ─── 상태 ─────────────────────────────────────────
+    let scale = 0.65, offsetX = 30, offsetY = 20;
+    let isPanning = false, panStart = { x: 0, y: 0 };
+    let isDraggingCard = false, dragCard = null, dragStart = { x: 0, y: 0 }, dragOrigPos = { x: 0, y: 0 };
+    let selectedTable = null;
+    let showLines = true;
+    let activeZones = new Set(Object.keys(ZONES));
+    const cardEls = {}, tablePos = {};
 
-function renderCard(t) {
-  const zc = getZoneColor(t.id), zn = getZoneName(t.id);
-  const card = document.createElement('div');
-  card.className = 'table-card';
-  card.id = 'card-' + t.id;
-  card.style.left = t.x + 'px';
-  card.style.top  = t.y + 'px';
+    function getZoneColor(id) {
+      for (const [z, d] of Object.entries(ZONES)) if (d.tables.includes(id)) return d.color;
+      return '#888';
+    }
+    function getZoneName(id) {
+      for (const [z, d] of Object.entries(ZONES)) if (d.tables.includes(id)) return z;
+      return '';
+    }
 
-  let fh = '';
-  for (const pk of t.pks) {
-    fh += `<div class="field-row pk">
+    function renderCard(t) {
+      const zc = getZoneColor(t.id), zn = getZoneName(t.id);
+      const card = document.createElement('div');
+      card.className = 'table-card';
+      card.id = 'card-' + t.id;
+      card.style.left = t.x + 'px';
+      card.style.top = t.y + 'px';
+
+      let fh = '';
+      for (const pk of t.pks) {
+        fh += `<div class="field-row pk">
       <span class="field-icon">🔑</span>
       <span class="field-name">${pk.name}</span>
       <span class="field-type">${pk.type}</span>
     </div>`;
-  }
-  if (t.fields.length) fh += '<div class="field-divider"></div>';
-  const vis = t.fields.slice(0,7), hid = t.fields.slice(7);
-  for (const f of vis) {
-    const cls = f.fk ? 'fk' : (!f.nullable ? 'nn' : '');
-    const icon = f.fk ? '🔗' : (!f.nullable ? '✱' : '');
-    fh += `<div class="field-row ${cls}">
+      }
+      if (t.fields.length) fh += '<div class="field-divider"></div>';
+      const vis = t.fields.slice(0, 7), hid = t.fields.slice(7);
+      for (const f of vis) {
+        const cls = f.fk ? 'fk' : (!f.nullable ? 'nn' : '');
+        const icon = f.fk ? '🔗' : (!f.nullable ? '✱' : '');
+        fh += `<div class="field-row ${cls}">
       <span class="field-icon" style="font-size:8px;">${icon}</span>
       <span class="field-name">${f.name}</span>
       <span class="field-type">${f.type}</span>
     </div>`;
-  }
-  if (hid.length) fh += `<div class="field-row" style="color:#bbb;justify-content:center;font-size:9px;background:#fafafa;">+ ${hid.length}개 더</div>`;
+      }
+      if (hid.length) fh += `<div class="field-row" style="color:#bbb;justify-content:center;font-size:9px;background:#fafafa;">+ ${hid.length}개 더</div>`;
 
-  card.innerHTML = `
+      card.innerHTML = `
     <div class="table-header" style="background:${zc};">
       <div>
         <div class="table-name-ko">${t.name}</div>
@@ -500,62 +682,62 @@ function renderCard(t) {
     </div>
     <div class="table-fields">${fh}</div>`;
 
-  card.addEventListener('mousedown', e => {
-    if (e.button !== 0) return;
-    e.stopPropagation();
-    isDraggingCard = true; dragCard = t.id;
-    dragStart = {x:e.clientX, y:e.clientY};
-    dragOrigPos = {...tablePos[t.id]};
-  });
-  card.addEventListener('click', e => {
-    if (Math.abs(e.clientX-dragStart.x)<3 && Math.abs(e.clientY-dragStart.y)<3) selectTable(t.id);
-  });
+      card.addEventListener('mousedown', e => {
+        if (e.button !== 0) return;
+        e.stopPropagation();
+        isDraggingCard = true; dragCard = t.id;
+        dragStart = { x: e.clientX, y: e.clientY };
+        dragOrigPos = { ...tablePos[t.id] };
+      });
+      card.addEventListener('click', e => {
+        if (Math.abs(e.clientX - dragStart.x) < 3 && Math.abs(e.clientY - dragStart.y) < 3) selectTable(t.id);
+      });
 
-  cardEls[t.id] = card;
-  tablePos[t.id] = {x:t.x, y:t.y};
-  document.getElementById('canvas').appendChild(card);
-}
+      cardEls[t.id] = card;
+      tablePos[t.id] = { x: t.x, y: t.y };
+      document.getElementById('canvas').appendChild(card);
+    }
 
-function selectTable(id) {
-  if (selectedTable) { const p = document.getElementById('card-'+selectedTable); if(p) p.classList.remove('selected'); }
-  if (selectedTable === id) {
-    selectedTable = null;
-    document.getElementById('side-panel').classList.remove('open');
-    document.getElementById('st-selected').textContent = '';
-    drawLines(); return;
-  }
-  selectedTable = id;
-  document.getElementById('card-'+id)?.classList.add('selected');
-  showPanel(id);
-  document.getElementById('st-selected').textContent = id;
-  drawLines();
-}
+    function selectTable(id) {
+      if (selectedTable) { const p = document.getElementById('card-' + selectedTable); if (p) p.classList.remove('selected'); }
+      if (selectedTable === id) {
+        selectedTable = null;
+        document.getElementById('side-panel').classList.remove('open');
+        document.getElementById('st-selected').textContent = '';
+        drawLines(); return;
+      }
+      selectedTable = id;
+      document.getElementById('card-' + id)?.classList.add('selected');
+      showPanel(id);
+      document.getElementById('st-selected').textContent = id;
+      drawLines();
+    }
 
-function showPanel(id) {
-  const t = TABLES.find(t=>t.id===id); if(!t) return;
-  const zc = getZoneColor(id);
-  const rels = RELATIONS.filter(r=>r.from===id||r.to===id);
+    function showPanel(id) {
+      const t = TABLES.find(t => t.id === id); if (!t) return;
+      const zc = getZoneColor(id);
+      const rels = RELATIONS.filter(r => r.from === id || r.to === id);
 
-  let pkH = t.pks.map(f=>`<div class="panel-field">
+      let pkH = t.pks.map(f => `<div class="panel-field">
     <div class="pf-left"><span class="pf-icon">🔑</span><span class="pf-name" style="color:#f57f17;font-weight:600;">${f.name}</span></div>
     <span class="pf-type">${f.type}</span></div>
-    ${f.comment?`<div class="pf-comment">${f.comment}</div>`:''}`).join('');
+    ${f.comment ? `<div class="pf-comment">${f.comment}</div>` : ''}`).join('');
 
-  let fH = t.fields.map(f=>`<div class="panel-field">
+      let fH = t.fields.map(f => `<div class="panel-field">
     <div class="pf-left">
-      <span class="pf-icon">${f.fk?'🔗':(!f.nullable?'✱':'')}</span>
-      <span class="pf-name" style="color:${f.fk?'#2e7d32':(!f.nullable?'#b71c1c':'#333')}">${f.name}</span>
+      <span class="pf-icon">${f.fk ? '🔗' : (!f.nullable ? '✱' : '')}</span>
+      <span class="pf-name" style="color:${f.fk ? '#2e7d32' : (!f.nullable ? '#b71c1c' : '#333')}">${f.name}</span>
     </div>
     <span class="pf-type">${f.type}</span></div>
-    ${f.comment?`<div class="pf-comment">${f.comment}</div>`:''}`).join('');
+    ${f.comment ? `<div class="pf-comment">${f.comment}</div>` : ''}`).join('');
 
-  let rH = rels.map(r=>{
-    const other = r.from===id?r.to:r.from;
-    const dir = r.from===id?'→':'←';
-    return `<div class="panel-field"><span style="color:#aaa;">${dir} ${other}</span><span class="pf-type">${r.label}</span></div>`;
-  }).join('');
+      let rH = rels.map(r => {
+        const other = r.from === id ? r.to : r.from;
+        const dir = r.from === id ? '→' : '←';
+        return `<div class="panel-field"><span style="color:#aaa;">${dir} ${other}</span><span class="pf-type">${r.label}</span></div>`;
+      }).join('');
 
-  document.getElementById('panel-content').innerHTML = `
+      document.getElementById('panel-content').innerHTML = `
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
       <div style="width:4px;height:20px;background:${zc};border-radius:2px;"></div>
       <div class="panel-title">${t.name}</div>
@@ -563,123 +745,124 @@ function showPanel(id) {
     <div class="panel-sub">${t.pName} · ${getZoneName(id)}</div>
     <div class="panel-section"><div class="panel-section-title">Primary Key</div>${pkH}</div>
     <div class="panel-section"><div class="panel-section-title">Fields (${t.fields.length})</div>${fH}</div>
-    ${rels.length?`<div class="panel-section"><div class="panel-section-title">Relations (${rels.length})</div>${rH}</div>`:''}`;
-  document.getElementById('side-panel').classList.add('open');
-}
-
-function getCardEdge(fromId, toId) {
-  const fp = tablePos[fromId], fe = cardEls[fromId];
-  const tp = tablePos[toId],   te = cardEls[toId];
-  if(!fp||!fe||!tp||!te) return null;
-  const fx=fp.x+fe.offsetWidth/2, fy=fp.y+fe.offsetHeight/2;
-  const tx=tp.x+te.offsetWidth/2, ty=tp.y+te.offsetHeight/2;
-  const dx=tx-fx, dy=ty-fy;
-  const w=fe.offsetWidth/2, h=fe.offsetHeight/2;
-  let sx,sy;
-  if(Math.abs(dx/w)>Math.abs(dy/h)){sx=fp.x+(dx>0?fe.offsetWidth:0);sy=fy+dy*(dx>0?w:-w)/(dx||1);}
-  else{sy=fp.y+(dy>0?fe.offsetHeight:0);sx=fx+dx*(dy>0?h:-h)/(dy||1);}
-  const tw=te.offsetWidth/2,th=te.offsetHeight/2;
-  let ex,ey;
-  if(Math.abs(-dx/tw)>Math.abs(-dy/th)){ex=tp.x+(-dx>0?te.offsetWidth:0);ey=ty+(-dy)*(-dx>0?tw:-tw)/(-dx||1);}
-  else{ey=tp.y+(-dy>0?te.offsetHeight:0);ex=tx+(-dx)*(-dy>0?th:-th)/(-dy||1);}
-  return {sx,sy,ex,ey};
-}
-
-function drawLines() {
-  const svg = document.getElementById('lines');
-  svg.innerHTML = '';
-  if(!showLines) return;
-  RELATIONS.forEach(rel=>{
-    if(!activeZones.has(getZoneName(rel.from))||!activeZones.has(getZoneName(rel.to))) return;
-    const pts = getCardEdge(rel.from, rel.to); if(!pts) return;
-    const isHl = selectedTable&&(rel.from===selectedTable||rel.to===selectedTable);
-    const zc = getZoneColor(rel.from);
-    const m1x=pts.sx+(pts.ex-pts.sx)*0.35, m1y=pts.sy;
-    const m2x=pts.sx+(pts.ex-pts.sx)*0.65, m2y=pts.ey;
-    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
-    path.setAttribute('d',`M${pts.sx},${pts.sy} C${m1x},${m1y} ${m2x},${m2y} ${pts.ex},${pts.ey}`);
-    path.setAttribute('stroke', isHl?'#f9a825':'#f9a825');
-    path.setAttribute('stroke-width', isHl?'2':'1');
-    path.setAttribute('fill','none');
-    path.setAttribute('opacity', isHl?'1':'0.4');
-    svg.appendChild(path);
-    if(isHl){
-      const mx=(pts.sx+pts.ex)/2, my=(pts.sy+pts.ey)/2;
-      const bg=document.createElementNS('http://www.w3.org/2000/svg','rect');
-      bg.setAttribute('x',mx-14); bg.setAttribute('y',my-9);
-      bg.setAttribute('width','28'); bg.setAttribute('height','13');
-      bg.setAttribute('rx','3'); bg.setAttribute('fill','white');
-      bg.setAttribute('stroke','#f9a825'); bg.setAttribute('stroke-width','1');
-      svg.appendChild(bg);
-      const txt=document.createElementNS('http://www.w3.org/2000/svg','text');
-      txt.setAttribute('x',mx); txt.setAttribute('y',my);
-      txt.setAttribute('text-anchor','middle'); txt.setAttribute('dominant-baseline','middle');
-      txt.setAttribute('font-size','8'); txt.setAttribute('fill','#f9a825'); txt.setAttribute('font-weight','600');
-      txt.textContent=rel.label; svg.appendChild(txt);
+    ${rels.length ? `<div class="panel-section"><div class="panel-section-title">Relations (${rels.length})</div>${rH}</div>` : ''}`;
+      document.getElementById('side-panel').classList.add('open');
     }
-  });
-}
 
-function buildZoneFilter() {
-  const wrap=document.getElementById('zoneFilter');
-  for(const [zone,data] of Object.entries(ZONES)){
-    const btn=document.createElement('button');
-    btn.className='zone-btn active';
-    btn.style.background=data.color+'22';
-    btn.style.color=data.color;
-    btn.style.borderColor=data.color+'55';
-    btn.textContent=zone; btn.dataset.zone=zone;
-    btn.addEventListener('click',()=>{
-      if(activeZones.has(zone)){if(activeZones.size===1)return;activeZones.delete(zone);btn.classList.replace('active','inactive');}
-      else{activeZones.add(zone);btn.classList.replace('inactive','active');}
-      TABLES.forEach(t=>{const el=cardEls[t.id];if(el)el.style.display=activeZones.has(getZoneName(t.id))?'block':'none';});
-      drawLines();
+    function getCardEdge(fromId, toId) {
+      const fp = tablePos[fromId], fe = cardEls[fromId];
+      const tp = tablePos[toId], te = cardEls[toId];
+      if (!fp || !fe || !tp || !te) return null;
+      const fx = fp.x + fe.offsetWidth / 2, fy = fp.y + fe.offsetHeight / 2;
+      const tx = tp.x + te.offsetWidth / 2, ty = tp.y + te.offsetHeight / 2;
+      const dx = tx - fx, dy = ty - fy;
+      const w = fe.offsetWidth / 2, h = fe.offsetHeight / 2;
+      let sx, sy;
+      if (Math.abs(dx / w) > Math.abs(dy / h)) { sx = fp.x + (dx > 0 ? fe.offsetWidth : 0); sy = fy + dy * (dx > 0 ? w : -w) / (dx || 1); }
+      else { sy = fp.y + (dy > 0 ? fe.offsetHeight : 0); sx = fx + dx * (dy > 0 ? h : -h) / (dy || 1); }
+      const tw = te.offsetWidth / 2, th = te.offsetHeight / 2;
+      let ex, ey;
+      if (Math.abs(-dx / tw) > Math.abs(-dy / th)) { ex = tp.x + (-dx > 0 ? te.offsetWidth : 0); ey = ty + (-dy) * (-dx > 0 ? tw : -tw) / (-dx || 1); }
+      else { ey = tp.y + (-dy > 0 ? te.offsetHeight : 0); ex = tx + (-dx) * (-dy > 0 ? th : -th) / (-dy || 1); }
+      return { sx, sy, ex, ey };
+    }
+
+    function drawLines() {
+      const svg = document.getElementById('lines');
+      svg.innerHTML = '';
+      if (!showLines) return;
+      RELATIONS.forEach(rel => {
+        if (!activeZones.has(getZoneName(rel.from)) || !activeZones.has(getZoneName(rel.to))) return;
+        const pts = getCardEdge(rel.from, rel.to); if (!pts) return;
+        const isHl = selectedTable && (rel.from === selectedTable || rel.to === selectedTable);
+        const zc = getZoneColor(rel.from);
+        const m1x = pts.sx + (pts.ex - pts.sx) * 0.35, m1y = pts.sy;
+        const m2x = pts.sx + (pts.ex - pts.sx) * 0.65, m2y = pts.ey;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', `M${pts.sx},${pts.sy} C${m1x},${m1y} ${m2x},${m2y} ${pts.ex},${pts.ey}`);
+        path.setAttribute('stroke', isHl ? '#f9a825' : '#f9a825');
+        path.setAttribute('stroke-width', isHl ? '2' : '1');
+        path.setAttribute('fill', 'none');
+        path.setAttribute('opacity', isHl ? '1' : '0.4');
+        svg.appendChild(path);
+        if (isHl) {
+          const mx = (pts.sx + pts.ex) / 2, my = (pts.sy + pts.ey) / 2;
+          const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          bg.setAttribute('x', mx - 14); bg.setAttribute('y', my - 9);
+          bg.setAttribute('width', '28'); bg.setAttribute('height', '13');
+          bg.setAttribute('rx', '3'); bg.setAttribute('fill', 'white');
+          bg.setAttribute('stroke', '#f9a825'); bg.setAttribute('stroke-width', '1');
+          svg.appendChild(bg);
+          const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          txt.setAttribute('x', mx); txt.setAttribute('y', my);
+          txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('dominant-baseline', 'middle');
+          txt.setAttribute('font-size', '8'); txt.setAttribute('fill', '#f9a825'); txt.setAttribute('font-weight', '600');
+          txt.textContent = rel.label; svg.appendChild(txt);
+        }
+      });
+    }
+
+    function buildZoneFilter() {
+      const wrap = document.getElementById('zoneFilter');
+      for (const [zone, data] of Object.entries(ZONES)) {
+        const btn = document.createElement('button');
+        btn.className = 'zone-btn active';
+        btn.style.background = data.color + '22';
+        btn.style.color = data.color;
+        btn.style.borderColor = data.color + '55';
+        btn.textContent = zone; btn.dataset.zone = zone;
+        btn.addEventListener('click', () => {
+          if (activeZones.has(zone)) { if (activeZones.size === 1) return; activeZones.delete(zone); btn.classList.replace('active', 'inactive'); }
+          else { activeZones.add(zone); btn.classList.replace('inactive', 'active'); }
+          TABLES.forEach(t => { const el = cardEls[t.id]; if (el) el.style.display = activeZones.has(getZoneName(t.id)) ? 'block' : 'none'; });
+          drawLines();
+        });
+        wrap.appendChild(btn);
+      }
+    }
+
+    function applyTransform() {
+      document.getElementById('canvas').style.transform = `translate(${offsetX}px,${offsetY}px) scale(${scale})`;
+      document.getElementById('st-zoom').textContent = `zoom ${Math.round(scale * 100)}%`;
+    }
+    function resetView() { scale = 0.65; offsetX = 30; offsetY = 20; applyTransform(); }
+    function toggleLines() { showLines = !showLines; drawLines(); }
+
+    const wrap = document.getElementById('canvas-wrap');
+    wrap.addEventListener('mousedown', e => {
+      if (e.target === wrap || e.target === document.getElementById('canvas') || e.target === document.getElementById('lines')) {
+        isPanning = true; panStart = { x: e.clientX - offsetX, y: e.clientY - offsetY }; wrap.classList.add('dragging');
+        if (selectedTable) { document.getElementById('card-' + selectedTable)?.classList.remove('selected'); selectedTable = null; document.getElementById('side-panel').classList.remove('open'); document.getElementById('st-selected').textContent = ''; drawLines(); }
+      }
     });
-    wrap.appendChild(btn);
-  }
-}
+    document.addEventListener('mousemove', e => {
+      if (isPanning) { offsetX = e.clientX - panStart.x; offsetY = e.clientY - panStart.y; applyTransform(); }
+      if (isDraggingCard && dragCard) {
+        const dx = (e.clientX - dragStart.x) / scale, dy = (e.clientY - dragStart.y) / scale;
+        const nx = dragOrigPos.x + dx, ny = dragOrigPos.y + dy;
+        tablePos[dragCard] = { x: nx, y: ny };
+        const el = cardEls[dragCard]; if (el) { el.style.left = nx + 'px'; el.style.top = ny + 'px'; }
+        drawLines();
+      }
+    });
+    document.addEventListener('mouseup', () => { isPanning = false; isDraggingCard = false; dragCard = null; wrap.classList.remove('dragging'); });
+    wrap.addEventListener('wheel', e => {
+      e.preventDefault();
+      const d = e.deltaY > 0 ? 0.9 : 1.1;
+      const rect = wrap.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      offsetX = mx - (mx - offsetX) * d; offsetY = my - (my - offsetY) * d;
+      scale = Math.min(Math.max(scale * d, 0.2), 2.5); applyTransform();
+    }, { passive: false });
 
-function applyTransform(){
-  document.getElementById('canvas').style.transform=`translate(${offsetX}px,${offsetY}px) scale(${scale})`;
-  document.getElementById('st-zoom').textContent=`zoom ${Math.round(scale*100)}%`;
-}
-function resetView(){scale=0.65;offsetX=30;offsetY=20;applyTransform();}
-function toggleLines(){showLines=!showLines;drawLines();}
-
-const wrap=document.getElementById('canvas-wrap');
-wrap.addEventListener('mousedown',e=>{
-  if(e.target===wrap||e.target===document.getElementById('canvas')||e.target===document.getElementById('lines')){
-    isPanning=true;panStart={x:e.clientX-offsetX,y:e.clientY-offsetY};wrap.classList.add('dragging');
-    if(selectedTable){document.getElementById('card-'+selectedTable)?.classList.remove('selected');selectedTable=null;document.getElementById('side-panel').classList.remove('open');document.getElementById('st-selected').textContent='';drawLines();}
-  }
-});
-document.addEventListener('mousemove',e=>{
-  if(isPanning){offsetX=e.clientX-panStart.x;offsetY=e.clientY-panStart.y;applyTransform();}
-  if(isDraggingCard&&dragCard){
-    const dx=(e.clientX-dragStart.x)/scale, dy=(e.clientY-dragStart.y)/scale;
-    const nx=dragOrigPos.x+dx, ny=dragOrigPos.y+dy;
-    tablePos[dragCard]={x:nx,y:ny};
-    const el=cardEls[dragCard]; if(el){el.style.left=nx+'px';el.style.top=ny+'px';}
-    drawLines();
-  }
-});
-document.addEventListener('mouseup',()=>{isPanning=false;isDraggingCard=false;dragCard=null;wrap.classList.remove('dragging');});
-wrap.addEventListener('wheel',e=>{
-  e.preventDefault();
-  const d=e.deltaY>0?0.9:1.1;
-  const rect=wrap.getBoundingClientRect();
-  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
-  offsetX=mx-(mx-offsetX)*d; offsetY=my-(my-offsetY)*d;
-  scale=Math.min(Math.max(scale*d,0.2),2.5); applyTransform();
-},{passive:false});
-
-TABLES.forEach(renderCard);
-buildZoneFilter();
-applyTransform();
-document.getElementById('st-tables').textContent=TABLES.length;
-document.getElementById('st-rels').textContent=RELATIONS.length;
-setTimeout(drawLines,100);
-window.addEventListener('resize',drawLines);
-</script>
+    TABLES.forEach(renderCard);
+    buildZoneFilter();
+    applyTransform();
+    document.getElementById('st-tables').textContent = TABLES.length; document.getElementById('st-ver') && (document.getElementById('st-ver').textContent = 'v3');
+    document.getElementById('st-rels').textContent = RELATIONS.length;
+    setTimeout(drawLines, 100);
+    window.addEventListener('resize', drawLines);
+  </script>
 </body>
+
 </html>
